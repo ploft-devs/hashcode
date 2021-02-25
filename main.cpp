@@ -4,6 +4,7 @@
 #include <string>
 #include <queue>
 #include <vector>
+#include <utility> 
 
 using namespace std;
 
@@ -15,49 +16,69 @@ int N_STREETS;
 int N_CARS;
 int POINTS_PER_CAR;
 
+int RES_INTERSECTIONS = 3;
+int RES_IDSINTERSECTIONS[3] = {0,1,2};
+int RES_STREETSCOUNT[3] = {1,1,1}; // Incoming streets
+string RES_STREETNAMES[4] = {"rue-de-londres","rue-d-amsterdam","rue-d-athenes","rue-de-moscou"};
+int RES_GREENTIME[4] = {1,1,1,1};
+
 class car
 {
-private:
-    //queue<street> path;
-
 public:
-    car(/* args */);
+    queue<string> path;
+    car() {}
+    car(queue<string> path)
+    {
+        this->path = path;
+    }
 };
-
-car::car()
-{
-}
 
 class street
 {
-private:
+
+public:
     string name;
-    queue<car> cars;
+    queue< pair<car, int> > cars;
     int time;
     int TrafficLightTime;
     bool TrafficLightStatus;
 
-public:
-    street(/* args */);
-};
+    street(string name, int time)
+    {
+        this->name = name;
+        this->time = time;
+        this->TrafficLightStatus = false;
+    }
 
-street::street(/* args */)
-{
-}
+    void addCar(car car, int time = 0)
+    {
+        cars.push(make_pair(car, time));
+    }
+};
 
 class intersection
 {
-private:
+public:
     vector<street> begin;
     vector<street> end;
+    intersection()
+    {
+    }
 
-public:
-    intersection(/* args */);
+    void setupTrafficLight()
+    {
+        if (end.size == 1){
+            this->end.at(0).TrafficLightTime = -1;
+            this->end.at(0).TrafficLightStatus = true;
+        } else
+            for(auto street: end)
+                street.TrafficLightTime = 1;
+    }
 };
 
-intersection::intersection(/* args */)
-{
-}
+vector<street> streets;
+vector<car> cars;
+vector<intersection> intersections;
 
 bool readSetup()
 {
@@ -71,49 +92,56 @@ bool readSetup()
     }
     else
     {
-        arq.getline(linha, 100);
         string numBuffer = "";
         int pos = 0;
-        while (linha[pos] != ' ')
+        //read parameters from first line
         {
-            numBuffer += linha[pos];
+            arq.getline(linha, 100);
+
+            while (linha[pos] != ' ')
+            {
+                numBuffer += linha[pos];
+                pos++;
+            }
+            N_TIME = stoi(numBuffer);
+            numBuffer = "";
             pos++;
-        }
-        N_TIME = stoi(numBuffer);
-        numBuffer = "";
-        pos++;
-        while (linha[pos] != ' ')
-        {
-            numBuffer += linha[pos];
+            while (linha[pos] != ' ')
+            {
+                numBuffer += linha[pos];
+                pos++;
+            }
+            N_INTERSECTIONS = stoi(numBuffer);
             pos++;
-        }
-        N_INTERSECTIONS = stoi(numBuffer);
-        pos++;
-        numBuffer = "";
-        while (linha[pos] != ' ')
-        {
-            numBuffer += linha[pos];
+            numBuffer = "";
+            while (linha[pos] != ' ')
+            {
+                numBuffer += linha[pos];
+                pos++;
+            }
+            N_STREETS = stoi(numBuffer);
             pos++;
-        }
-        N_STREETS = stoi(numBuffer);
-        pos++;
-        numBuffer = "";
-        while (linha[pos] != ' ')
-        {
-            numBuffer += linha[pos];
+            numBuffer = "";
+            while (linha[pos] != ' ')
+            {
+                numBuffer += linha[pos];
+                pos++;
+            }
+            N_CARS = stoi(numBuffer);
             pos++;
-        }
-        N_CARS = stoi(numBuffer);
-        pos++;
-        numBuffer = "";
-        while (linha[pos] != ' ')
-        {
-            numBuffer += linha[pos];
+            numBuffer = "";
+            while (linha[pos] != ' ')
+            {
+                numBuffer += linha[pos];
+                pos++;
+            }
+            POINTS_PER_CAR = stoi(numBuffer);
             pos++;
+            numBuffer = "";
         }
-        POINTS_PER_CAR = stoi(numBuffer);
-        pos++;
-        numBuffer = "";
+
+        intersections = vector<intersection>(N_INTERSECTIONS);
+
         int no1 = 0, no2 = 0;
         for (int i = 0; i < N_STREETS; i++)
         {
@@ -149,7 +177,36 @@ bool readSetup()
                 numBuffer += linha[pos];
                 pos++;
             }
-            
+            int tam = stoi(numBuffer);
+            street newStreet(nome, tam);
+            intersections[no1].begin.push_back(newStreet);
+            intersections[no2].end.push_back(newStreet);
+            streets.push_back(newStreet);
+        }
+        for (int i = 0; i < N_CARS; i++)
+        {
+            arq.getline(linha, 100);
+            car newCar;
+            pos = 0;
+            numBuffer = "";
+            while (linha[pos] != ' ')
+            {
+                numBuffer += linha[pos];
+                pos++;
+            }
+            int streetsNum = stoi(numBuffer);
+            pos++;
+            string path = "";
+            for (int j = 0; j < streetsNum; j++)
+            {
+                while (linha[pos] != ' ')
+                {
+                    path += linha[pos];
+                    pos++;
+                }
+                newCar.path.push(path);
+            }
+            cars.push_back(newCar);
         }
 
         return true;
@@ -158,12 +215,32 @@ bool readSetup()
 
 void solve()
 {
-    ifstream arq;
-    arq.open("");
-    while(N_TIME--){
-        
+    int time = N_TIME;
+    for (int i = 0; i < time; i++)
+    {
     }
-}   
+}
+
+void save()
+{
+
+    auto arq = openFile("solve.txt");
+    
+    arq << RES_INTERSECTIONS; //the number of intersections for which you specify the schedule.
+
+    for (int i = 0; i < RES_INTERSECTIONS; i++)
+    {
+        arq << RES_IDSINTERSECTIONS[i]; //the ID of the intersection
+        arq << RES_STREETSCOUNT[i];        // the number of incoming streets
+
+        for (int j = 0; j < 3; j++) //indice do streetscount
+        {
+            // arq << RES_STREETNAMES[j] + RES_GREENTIME[j];
+            // the street name, how long each street will have a green light
+        }
+    }
+    arq.close();
+}
 
 int main()
 {
@@ -176,17 +253,22 @@ int main()
         cout << "\nN_STREETS: " << N_STREETS;
         cout << "\nN_CARS: " << N_CARS;
         cout << "\nPOINTS_PER_CAR " << POINTS_PER_CAR;
+        cout<<"\n\nIntersections: \n";
+        for(int i =0;i<N_INTERSECTIONS;i++){
+            cout<<"Intersection "<<i<<": \n";
+            cout<<"Streers starting here: \n";
+            for(street x: intersections[i].begin){
+                cout<<x.name<<endl;
+            }
+            cout<<"Streets ending here: \n";
+            for(street x: intersections[i].end){
+                cout<<x.name<<endl;
+            }
+        }
     }
 
     return 0;
 }
-
-/*
- * TODO: Geral fazer, geral ganhar programação maratona
- * 
- * 
- * 
- */
 
 /*
     Class car:
