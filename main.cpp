@@ -4,10 +4,14 @@
 #include <queue>
 #include <vector>
 #include <utility> 
+#include <map> 
+#include <bits/stdc++.h> 
+#include <stdlib.h>     /* srand, rand */
+#include <time.h>   
 
 using namespace std;
 
-const bool DEBUG_MODE = true;
+const bool DEBUG_MODE = false;
 
 int N_TIME;
 int N_INTERSECTIONS;
@@ -24,9 +28,9 @@ int RES_GREENTIME[4] = {1,1,1,1};
 class car
 {
 public:
-    queue<string> path;
+    vector<string> path;
     car() {}
-    car(queue<string> path)
+    car(vector<string> path)
     {
         this->path = path;
     }
@@ -89,7 +93,7 @@ bool readSetup()
 {
     ifstream arq;
     arq.open("file.txt");
-    char linha[100];
+    char linha[5000];
     if (!arq.is_open())
     {
         cout << "Could not read setup file";
@@ -101,7 +105,7 @@ bool readSetup()
         int pos = 0;
         //read parameters from first line
         {
-            arq.getline(linha, 100);
+            arq.getline(linha, 5000);
 
             while (linha[pos] != ' ')
             {
@@ -150,7 +154,7 @@ bool readSetup()
         int no1 = 0, no2 = 0;
         for (int i = 0; i < N_STREETS; i++)
         {
-            arq.getline(linha, 100);
+            arq.getline(linha, 5000);
             pos = 0;
             numBuffer = "";
             while (linha[pos] != ' ')
@@ -190,7 +194,7 @@ bool readSetup()
         }
         for (int i = 0; i < N_CARS; i++)
         {
-            arq.getline(linha, 100);
+            arq.getline(linha, 5000);
             car newCar;
             pos = 0;
             numBuffer = "";
@@ -209,7 +213,7 @@ bool readSetup()
                     path += linha[pos];
                     pos++;
                 }
-                newCar.path.push(path);
+                newCar.path.push_back(path);
             }
             cars.push_back(newCar);
         }
@@ -217,34 +221,48 @@ bool readSetup()
         return true;
     }
 }
-
+map<string,long> pontos;
 void solve()
 {
-    int time = N_TIME;
-    for (int i = 0; i < time; i++)
-    {
+    for(car carro : cars){
+        for(auto street : carro.path){
+            if(pontos.find(street)==pontos.end()){
+                pontos[street]=1;
+            }
+            else{
+                pontos[street]++;
+            }
+        }
     }
 }
+
+bool cmp(pair<string, long>& a, 
+         pair<string, long>& b) 
+{ 
+    return a.second > b.second; 
+} 
+  
+void sort(map<string, long>& M, ofstream& arq) 
+{ 
+    vector<pair<string, long> > A; 
+
+    for (auto& it : M) { 
+        A.push_back(it); 
+    } 
+
+    sort(A.begin(), A.end(), cmp);
+    int i = A.size() ;
+    for (auto& it : A) { 
+        arq <<it.first << " "<< ((int)i/10 + 1) << "\n";
+        i--;
+    } 
+
+
+} 
 
 void save()
 {
 
-    // auto arq = openFile("solve.txt");
-    
-    // arq << N_INTERSECTIONS; //the number of intersections for which you specify the schedule.
-
-    // for (int i = 0; i < RES_INTERSECTIONS; i++)
-    // {
-    //     arq << RES_IDSINTERSECTIONS[i]; //the ID of the intersection
-    //     arq << RES_STREETSCOUNT[i];        // the number of incoming streets
-
-    //     for (int j = 0; j < RES_STREETSCOUNT[i]; j++) //indice do streetscount
-    //     {
-    //         arq << RES_STREETNAMES[j+i] + to_string(RES_GREENTIME[j+i]);
-    //         // the street name, how long each street will have a green light
-    //     }
-    // }
-    // arq.close();
     ofstream arq;
     arq.open("solve.txt");
     
@@ -254,12 +272,17 @@ void save()
     {
         arq << i << "\n"; //the ID of the intersection
         arq << intersections[i].end.size() << "\n";        // the number of incoming streets
-
+        map<string,long> ordenado;
         for (int j = 0; j < intersections[i].end.size(); j++) //indice do streetscount
         {
-            arq << intersections[i].end[j].name << " 1"  << "\n";
+                //ordenado[intersections[i].end[j].name] = pontos[intersections[i].end[j].name];
+            srand (time(NULL));
+            arq << intersections[i].end[j].name << " " << rand() % 10 + 1  << "\n";
             // the street name, how long each street will have a green light
         }
+        //sort(ordenado, arq);
+
+    
     }
     arq.close();
 }
