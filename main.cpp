@@ -1,5 +1,4 @@
 #include <iostream>
-#include "files.hpp"
 #include <fstream>
 #include <string>
 #include <queue>
@@ -18,7 +17,7 @@ int POINTS_PER_CAR;
 
 int RES_INTERSECTIONS = 3;
 int RES_IDSINTERSECTIONS[3] = {0,1,2};
-int RES_STREETSCOUNT[3] = {1,1,1}; // Incoming streets
+int RES_STREETSCOUNT[3] = {1,2,1}; // Incoming streets
 string RES_STREETNAMES[4] = {"rue-de-londres","rue-d-amsterdam","rue-d-athenes","rue-de-moscou"};
 int RES_GREENTIME[4] = {1,1,1,1};
 
@@ -61,18 +60,24 @@ class intersection
 public:
     vector<street> begin;
     vector<street> end;
+    int timeRemaining;
+    int greenLightStreet;
+
     intersection()
     {
     }
 
     void setupTrafficLight()
     {
-        if (end.size == 1){
+        if (this->end.size() == 1){
             this->end.at(0).TrafficLightTime = -1;
             this->end.at(0).TrafficLightStatus = true;
-        } else
+            timeRemaining=-1;
+            greenLightStreet=0;
+        } else{
             for(auto street: end)
                 street.TrafficLightTime = 1;
+        }
     }
 };
 
@@ -224,18 +229,35 @@ void solve()
 void save()
 {
 
-    auto arq = openFile("solve.txt");
+    // auto arq = openFile("solve.txt");
     
-    arq << RES_INTERSECTIONS; //the number of intersections for which you specify the schedule.
+    // arq << N_INTERSECTIONS; //the number of intersections for which you specify the schedule.
 
-    for (int i = 0; i < RES_INTERSECTIONS; i++)
+    // for (int i = 0; i < RES_INTERSECTIONS; i++)
+    // {
+    //     arq << RES_IDSINTERSECTIONS[i]; //the ID of the intersection
+    //     arq << RES_STREETSCOUNT[i];        // the number of incoming streets
+
+    //     for (int j = 0; j < RES_STREETSCOUNT[i]; j++) //indice do streetscount
+    //     {
+    //         arq << RES_STREETNAMES[j+i] + to_string(RES_GREENTIME[j+i]);
+    //         // the street name, how long each street will have a green light
+    //     }
+    // }
+    // arq.close();
+    ofstream arq;
+    arq.open("solve.txt");
+    
+    arq << N_INTERSECTIONS<<"\n"; //the number of intersections for which you specify the schedule.
+
+    for (int i = 0; i < N_INTERSECTIONS; i++)
     {
-        arq << RES_IDSINTERSECTIONS[i]; //the ID of the intersection
-        arq << RES_STREETSCOUNT[i];        // the number of incoming streets
+        arq << i << "\n"; //the ID of the intersection
+        arq << intersections[i].end.size() << "\n";        // the number of incoming streets
 
-        for (int j = 0; j < 3; j++) //indice do streetscount
+        for (int j = 0; j < intersections[i].end.size(); j++) //indice do streetscount
         {
-            // arq << RES_STREETNAMES[j] + RES_GREENTIME[j];
+            arq << intersections[i].end[j].name << " 1"  << "\n";
             // the street name, how long each street will have a green light
         }
     }
@@ -266,6 +288,7 @@ int main()
             }
         }
     }
+    save();
 
     return 0;
 }
